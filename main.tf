@@ -73,3 +73,4 @@ resource "aws_route53_record" "cf_ssh_nlb_record_ssh" {
   records = ["${aws_lb.cf_ssh_nlb.dns_name}"]
 }
 
+output "dns_name" {value = aws_lb.cf_ssh_nlb.dns_name}
