@@ -75,3 +75,4 @@ resource "aws_route53_record" "cf_ssh_nlb_record_ssh" {
 
 output "dns_name" {value = aws_lb.cf_ssh_nlb.dns_name}
 output "lb_name"  {value = aws_lb.cf_ssh_nlb.name }
+output "lb_target_group_name" { value = aws_lb_target_group.cf_ssh_nlb_tg.name }
