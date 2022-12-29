@@ -11,14 +11,14 @@ variable enable_route_53       { default = 1 }  # Disable if using CloudFlare or
 ################################################################################
 # CF SSH NLB 
 ################################################################################
-resource "aws_lb" "cf_ssh_nlb" {
-  name               = "cf-ssh-nlb"
+resource "aws_lb" "cf_ssh_lb" {
+  name               = "cf-ssh-lb"
   internal           = var.internal_lb
   load_balancer_type = "network"
   subnets            = var.subnet_ids
   # NOTE: NLB "network" LB does not support security groups.
   tags               = merge(
-      {Name              = "cf-ssh-nlb"}, 
+      {Name              = "cf-ssh-lb"}, 
       {Environment       = "cf-ssh" },
       var.resource_tags
   )
@@ -27,14 +27,14 @@ resource "aws_lb" "cf_ssh_nlb" {
 ################################################################################
 # NLB Target Group
 ################################################################################
-resource "aws_lb_target_group" "cf_ssh_nlb_tg" {
-  name         = "cf-ssh-nlb-tg"
+resource "aws_lb_target_group" "cf_ssh_lb_tg" {
+  name         = "cf-ssh-lb-tg"
   port         = 2222
   protocol     = "TCP"
   vpc_id       = var.vpc_id
   target_type  = "instance"
   tags         = merge(
-      {Name              = "cf-ssh-nlb-tg"}, 
+      {Name              = "cf-ssh-lb-tg"}, 
       {Environment       = "cf-ssh" },
       var.resource_tags
   )
@@ -45,17 +45,17 @@ resource "aws_lb_target_group" "cf_ssh_nlb_tg" {
 ###############################################################################
 # NLB Listener for CF SSH
 ###############################################################################
-resource "aws_lb_listener" "cf_ssh_nlb_listener_sys" {
-  load_balancer_arn = aws_lb.cf_ssh_nlb.arn
+resource "aws_lb_listener" "cf_ssh_lb_listener_sys" {
+  load_balancer_arn = aws_lb.cf_ssh_lb.arn
   port = "2222"
   protocol = "TCP"
   default_action {
     type = "forward"
-    target_group_arn = aws_lb_target_group.cf_ssh_nlb_tg.arn
+    target_group_arn = aws_lb_target_group.cf_ssh_lb_tg.arn
   }
 
   tags               = merge(
-      {Name              = "cf-ssh-nlb-listener-sys"}, 
+      {Name              = "cf-ssh-lb-listener-sys"}, 
       {Environment       = "cf-ssh" },
       var.resource_tags
   )  
@@ -64,15 +64,15 @@ resource "aws_lb_listener" "cf_ssh_nlb_listener_sys" {
 ################################################################################
 # CF SSH NLB Route53 DNS CNAME Record - SSH Domain
 ################################################################################
-resource "aws_route53_record" "cf_ssh_nlb_record_ssh" {
+resource "aws_route53_record" "cf_ssh_lb_record_ssh" {
   count   = var.enable_route_53
   zone_id = var.route53_zone_id
   name = var.ssh_domain
   type = "CNAME"
   ttl = "60"
-  records = ["${aws_lb.cf_ssh_nlb.dns_name}"]
+  records = ["${aws_lb.cf_ssh_lb.dns_name}"]
 }
 
-output "dns_name" {value = aws_lb.cf_ssh_nlb.dns_name}
-output "lb_name"  {value = aws_lb.cf_ssh_nlb.name }
-output "lb_target_group_name" { value = aws_lb_target_group.cf_ssh_nlb_tg.name }
+output "dns_name" {value = aws_lb.cf_ssh_lb.dns_name}
+output "lb_name"  {value = aws_lb.cf_ssh_lb.name }
+output "lb_target_group_name" { value = aws_lb_target_group.cf_ssh_lb_tg.name }
